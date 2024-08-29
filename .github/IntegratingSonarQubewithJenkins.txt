@@ -1,0 +1,110 @@
+Integrating SonarQube with Jenkins
+
+Prerequisites:
+Installed Docker
+Installed Jenkins
+Basic familiarity with Docker and Jenkins
+
+-------->Step 1: Setting Up SonarQube
+Using Docker First, let’s pull the SonarQube Docker image and run it.
+
+docker pull sonarqube
+docker run -d --name sonarqube -p 9000:9000 sonarqube
+Access SonarQube UI by navigating to http://your-IP-address:9000 in your web browser. Follow the setup wizard to create an admin account.
+
+Default login credentials are admin/admin.
+
+-------->Step 2: Generate SonarQube Token
+2.1. Log in to SonarQube using the admin credentials.
+
+2.2. Navigate to “My Account” -> “Security” -> “Generate Tokens”.
+
+2.3. Provide a name for the token and click on “Generate”. Save the generated token securely.
+
+To set up SonarQube credentials in Jenkins:
+
+Go to “Manage Jenkins” > “Manage Credentials”.
+Choose the appropriate domain.
+Click “Add Credentials”.
+Select the credential type (e.g., “Secret text” for tokens, “Username with password” for username/password).
+Enter the credential details.
+Provide an ID and description.
+Save the credentials.
+
+-------->Step 3: Create a New Project:
+Once logged in, you need to create a new project in SonarQube. Follow these steps:
+
+Click on the “Projects” tab on the top menu.
+Click on the “Create Project” button.
+Provide a unique project key and a display name for your project.
+Choose the appropriate language for your project. SonarQube supports various programming languages.
+Click on “Set Up” to proceed.
+Configure Analysis Settings: After setting up the project, you’ll be prompted to configure the analysis settings. This involves configuring how SonarQube will analyze your code.
+
+-------->Step 4: Configuring SonarQube Properties:
+It can offer benefits in terms of organization, consistency, and ease of maintenance, especially for projects with specific configuration needs
+
+Create a sonar-project.properties file in your project directory.
+Add necessary properties, e.g.,
+sonar.projectKey=lil_sonar_project
+
+-------->Step 5: Installing SonarQube Scanner in Jenkins
+Open Jenkins dashboard and navigate to Manage Jenkins > Global Tool Configuration.
+Scroll down to the SonarQube Scanner section.
+Click on Add SonarQube Scanner and provide a name for the installation.
+Specify the path to the SonarQube scanner installation directory.
+Save the configuration.
+
+-------->Step 6: Install SonarQube Plugin
+To run your project analyses with Jenkins, the following plugins must be installed and configured:
+
+SonarQube Scanner plugin for Jenkins — version 2.11 or later
+Navigate to Jenkins Dashboard -> “Manage Jenkins” -> “Manage Plugins”.
+
+Go to the “Available” tab, search for “SonarQube Scanner” plugin, and install it.
+
+-------->Step 7: Configure SonarQube in Jenkins
+Navigate to Jenkins Dashboard -> “Manage Jenkins” -> “Configure System”.
+Scroll down to the “SonarQube servers” section and click on “Add SonarQube”.
+Provide a name for the SonarQube server.
+Enter the SonarQube server URL (http://IP_SonarQube:9000).
+Paste the SonarQube token generated in Step 2.
+Save the configuration.
+
+-------->Step 8: Integrate SonarQube into Jenkins Pipeline
+Open or create a Jenkinsfile in your project.
+
+Define the SonarQube scanner configuration within the pipeline script:
+
+pipeline {
+    agent any 
+    
+    stages { 
+        stage('SCM Checkout') {
+            steps{
+           git branch: 'main', url: 'https://github.com/lily4499/lil-node-app.git'
+            }
+        }
+        // run sonarqube test
+        stage('Run Sonarqube') {
+            environment {
+                scannerHome = tool 'lil-sonar-tool';
+            }
+            steps {
+              withSonarQubeEnv(credentialsId: 'lil-sonar-credentials', installationName: 'lil sonar installation') {
+                sh "${scannerHome}/bin/sonar-scanner"
+              }
+            }
+        }
+    }
+}
+Make sure to replace SonarQube Tool, Installation and Credentials with the names you gave to your configurations in Jenkins.
+
+-------->Step 9: Checking SonarQube Configuration:
+Run the Jenkins pipeline job.
+Once the SonarQube stage executes, check the SonarQube dashboard (http://localhost:9000) for the analysis report.
+Verify that the code quality metrics are populated correctly.
+
+
+Conclusion:
+Integrating SonarQube with Jenkins enhances the quality of your code by providing insightful analysis and metrics. By following this step-by-step guide, you can seamlessly incorporate SonarQube into your CI/CD pipeline, ensuring continuous code quality improvement.
